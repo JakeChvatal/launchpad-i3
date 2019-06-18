@@ -8,7 +8,7 @@
     ["kill", "kill", "kill", "kill", "kill", "kill", "kill", "kill"],
     ["kill", "kill", "kill", "kill", "kill", "kill", "kill", "kill"]],
 "b": [["", "", "", "focus up", "focus up", "", "", ""],
-      ["", "", "", "focus up", "focus up", "", "", ""],
+      ["", "", "", "focus up", "focus up", "", "exec termite", ""],
       ["", "", "", "focus up", "focus up", "", "", ""],
       ["focus left", "focus left", "focus left", "kill", "kill", "focus right", "focus right", "focus right"],
       ["focus left", "focus left", "focus left", "kill", "kill", "focus right", "focus right", "focus right"],

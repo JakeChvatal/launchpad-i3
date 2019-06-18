@@ -98,30 +98,46 @@ class LaunchpadOs:
         self.lp.Open()
         try:
             self.json = self.read_json(CONFIG_FILE)
-        except: # TODO: find spefici exceptions
+        except: # TODO: find error thrown
             sys.exit("The configuration file could not be found or was not in the format specified.")
 
         try:
             self.lp.LedAllOn(0)
         except AttributeError:
             sys.exit("The launchpad is not plugged in. Please plug in the device and try again.")
+        if self.lp.Open():
 
+            # initial lighting
+            self.workspace_control(False, i3.get_workspaces(), False)
+            self.i3_menu(None, [0, 0], None)
+            self.refresh_letter_buttons()
+            self.refresh_grid()
+
+            # subscribe to events
+            self.button_monitor = Subscription(self.i3_menu, self.lp)
+            self.workspace_monitor = i3.Subscription(self.workspace_control, 'workspace')
+
+    # helper function to read in the json file
     def read_json(self, filepath):
         with open(filepath, encoding='utf-8-sig') as json_file:
             return json.loads(json_file.read())
 
     # displays leds based on the focused workspace
     def workspace_control(self, event, data, subscription):
-        letter_buttons = {8: 'a', 24: 'b', 40: 'c', 56: 'd', 72: 'e', 88: 'f', 104: 'g', 120: 'h'}
-        self.lp.LedAllOn(0)
+        workspaces = [1, 2, 3, 4, 5, 6, 7, 8]
 
         for workspace in data:
             if workspace['focused']:
                 self.lp.LedCtrlXY(workspace['num'] - 1, 0, 0, 2)
             else:
                 self.lp.LedCtrlXY(workspace['num'] - 1, 0, 0, 1)
+            workspaces.remove(workspace['num'])
+
+        for i in workspaces:
+            self.lp.LedCtrlXY(i, 0, 0, 0)
 
     # runs i3 controls based on the button pressed
+    # receives message of button press in form of [button_num, button on?]
     def i3_menu(self, event, data, subscription):
         if data[1] is True:
             # controls workspaces
@@ -131,6 +147,10 @@ class LaunchpadOs:
             # menu for a to h buttons
             elif LETTER_BUTTONS.get(data[0]) is not None:
                 self.mode = LETTER_BUTTONS.get(data[0])
+
+                if(self.mode == 'h'):
+                    self.quit()
+
                 self.refresh_letter_buttons()
                 self.refresh_grid()
 
@@ -169,21 +189,12 @@ class LaunchpadOs:
             else:
                 self.lp.LedCtrlRaw(key, 1, 1)
 
-    # Starts the event listeners responsible for detecting button changes on the Launchpad.
-    def main(self):
-        if self.lp.Open():
-
-            # initial lighting
-            self.workspace_control(False, i3.get_workspaces(), False)
-            self.i3_menu(None, [0, 0], None)
-            self.refresh_letter_buttons()
-            self.refresh_grid()
-
-            # subscribe to events
-            button_monitor = Subscription(self.i3_menu, self.lp)
-            workspace_monitor = i3.Subscription(self.workspace_control, 'workspace')
+    def quit(self):
+        self.lp.LedAllOn(0)
+        self.lp.Close()
+        self.button_monitor.close()
+        self.workspace_monitor.close()
 
 
 if __name__ == '__main__':
     lp = LaunchpadOs()
-    lp.main()
